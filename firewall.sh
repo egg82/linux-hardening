@@ -75,7 +75,13 @@ then
   echo "[WARN] Not implemented yet."
 elif [ "$FIREWALL" == "iptables" ]
 then
-  echo "[WARN] Not implemented yet."
+  if [ "$OS_TYPE" == "debian" ]
+  then
+    echo "[WARN] Not implemented yet."
+  elif [ "$OS_TYPE" == "redhat" ]
+  then
+    echo "[WARN] Not implemented yet."
+  fi
 fi
 
 echo
@@ -96,7 +102,13 @@ then
   echo "[WARN] Not implemented yet."
 elif [ "$FIREWALL" == "iptables" ]
 then
-  echo "[WARN] Not implemented yet."
+  if [ "$OS_TYPE" == "debian" ]
+  then
+    echo "[WARN] Not implemented yet."
+  elif [ "$OS_TYPE" == "redhat" ]
+  then
+    echo "[WARN] Not implemented yet."
+  fi
 fi
 
 echo
@@ -109,7 +121,13 @@ then
   echo "[WARN] Not implemented yet."
 elif [ "$FIREWALL" == "iptables" ]
 then
-  echo "[WARN] Not implemented yet."
+  if [ "$OS_TYPE" == "debian" ]
+  then
+    echo "[WARN] Not implemented yet."
+  elif [ "$OS_TYPE" == "redhat" ]
+  then
+    echo "[WARN] Not implemented yet."
+  fi
 fi
 
 echo
