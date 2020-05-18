@@ -16,4 +16,9 @@ if [[ $CHOICE =~ ^[Yy] ]]
 then
   source ./cloudflare.sh
 fi
+read -p "Are you using this for a competition? (y/N): " -r CHOICE
+if [[ $CHOICE =~ ^[Yy] ]]
+then
+  source ./competition.sh
+fi
 source ./tools.sh
