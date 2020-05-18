@@ -7,6 +7,16 @@ source ./utils.sh
 echo
 echo "[INFO] Starting Cloudflare configuration.."
 
+if [[ -n ${1+x} ]]
+then
+  TCP_PORTS=$1
+fi
+
+if [[ -n ${2+x} ]]
+then
+  UDP_PORTS=$2
+fi
+
 FIREWALL="none"
 
 if [ "$(eval "${PKG_CHECK_INST_CMD//\{item\}/ufw}")" -ne 0 ]
@@ -72,8 +82,11 @@ fi
 echo
 if [ "$FIREWALL" == "ufw" ]
 then
-  read -p "TCP Ports to open to Cloudflare (eg. 22,53,80,443): " -r PORTS
-  for i in ${PORTS//,/ }
+  if [[ -z ${TCP_PORTS+x} ]]
+  then
+    read -p "TCP Ports to open to Cloudflare (eg. 22,53,80,443): " -r TCP_PORTS
+  fi
+  for i in ${TCP_PORTS//,/ }
   do
     cat /tmp/cf_ips | while IFS= read -r CFIP
     do
@@ -81,8 +94,12 @@ then
     done
     echo "[INFO] Added $i"
   done
-  read -p "UDP Ports to open to Cloudflare (eg. 22,53,80,443): " -r PORTS
-  for i in ${PORTS//,/ }
+
+  if [[ -z ${UDP_PORTS+x} ]]
+  then
+    read -p "UDP Ports to open to Cloudflare (eg. 22,53,80,443): " -r UDP_PORTS
+  fi
+  for i in ${UDP_PORTS//,/ }
   do
     cat /tmp/cf_ips | while IFS= read -r CFIP
     do
@@ -90,6 +107,7 @@ then
     done
     echo "[INFO] Added $i"
   done
+
   echo "[INFO] Reloading firewall.."
   eval "ufw --force reload >/dev/null 2>&1"
 elif [ "$FIREWALL" == "firewalld" ]
@@ -106,17 +124,17 @@ then
   fi
 fi
 
-echo
-echo "[INFO] Installing cron job.."
-
-SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
-  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
-  SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
-done
-DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
-eval "(crontab -l ; echo \"0 2 * * * $DIR/${BASH_SOURCE[0]} >/dev/null 2>&1\")| crontab -"
+if [ ! -f /etc/cron.daily/cloudflare ]
+then
+  SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+  echo
+  echo "[INFO] Installing cron job.."
+  cat <<EOT >> /etc/cron.daily/cloudflare
+#!/bin/bash
+$SCRIPTPATH $TCP_PORTS $UDP_PORTS >/dev/null 2>&1
+EOT
+  chmod +x /etc/cron.daily/cloudflare
+fi
 
 echo
 echo "[INFO] Cloudflare configuration complete!"
