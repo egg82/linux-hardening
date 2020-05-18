@@ -13,6 +13,8 @@ install_if_nxe_safe "iotop"
 install_if_nxe_safe "iftop"
 install_if_nxe_safe "ncdu"
 install_if_nxe_safe "pydf"
+install_if_nxe_safe "curl"
+install_if_nxe_safe "wget"
 
 echo
 read -p "Would you like to update the system? (y/N): " -r CHOICE

@@ -91,7 +91,7 @@ netstat -peanut | grep LISTEN
 echo
 if [ "$FIREWALL" == "ufw" ]
 then
-  read -p "Ports to open (eg. 22/tcp,53,80/tcp,443/tcp): " -r PORTS
+  read -p "Ports to open to ALL (eg. 22/tcp,53,80/tcp,443/tcp): " -r PORTS
   for i in ${PORTS//,/ }
   do
     eval "ufw allow in $i >/dev/null 2>&1"
