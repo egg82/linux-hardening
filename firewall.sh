@@ -4,6 +4,9 @@ source ./root_check.sh
 source ./settings.sh
 source ./utils.sh
 
+echo
+echo "[INFO] Starting firewall configuration.."
+
 FIREWALL="none"
 
 if [ "$(eval "${PKG_CHECK_INST_CMD//\{item\}/ufw}")" -ne 0 ]
@@ -109,4 +112,4 @@ then
 fi
 
 echo
-echo "[INFO] Firewall complete!"
+echo "[INFO] Firewall configuration complete!"

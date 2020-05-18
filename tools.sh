@@ -4,6 +4,9 @@ source ./settings.sh
 source ./utils.sh
 
 echo
+echo "[INFO] Starting toolset configuration.."
+
+echo
 echo "[INFO] Installing handy tools/utilities.."
 install_if_nxe_safe "htop"
 install_if_nxe_safe "iotop"
@@ -19,4 +22,4 @@ then
 fi
 
 echo
-echo "[INFO] Tools complete!"
+echo "[INFO] Toolset configuration complete!"
