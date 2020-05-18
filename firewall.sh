@@ -34,6 +34,7 @@ then
   elif [ "$OS_TYPE" == "debian" ] && [ "$(eval "${PKG_CHECK_AVAIL_CMD//\{item\}/iptables}")" -ne 0 ]
   then
     install_if_nxe "iptables"
+    install_if_nxe "iptables-persistent"
     FIREWALL="iptables"
   elif [ "$OS_TYPE" == "redhat" ] && [ "$(eval "${PKG_CHECK_AVAIL_CMD//\{item\}/firewalld}")" -ne 0 ]
   then
