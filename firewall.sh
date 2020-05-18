@@ -58,7 +58,7 @@ echo "[INFO] Setting firewall defaults.."
 if [ "$FIREWALL" == "ufw" ]
 then
   eval "ufw disable >/dev/null 2>&1"
-  eval "ufw reset >/dev/null 2>&1"
+  eval "ufw --force reset >/dev/null 2>&1"
   eval "ufw default deny incoming >/dev/null 2>&1"
   eval "ufw default deny outgoing >/dev/null 2>&1"
   eval "ufw allow out 53 comment \"DNS TCP/UDP\" >/dev/null 2>&1"
