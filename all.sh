@@ -9,6 +9,7 @@ echo "[INFO] Installer: $INSTALLER"
 
 source ./users.sh
 source ./firewall.sh
+# Cloudflare after firewall, since firewall erases current config
 echo
 read -p "Are you behind Cloudflare? (y/N): " -r CHOICE
 if [[ $CHOICE =~ ^[Yy] ]]
