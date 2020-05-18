@@ -54,7 +54,7 @@ echo "[INFO] Ensuring appropriate tools are installed.."
 install_if_nxe "net-tools"
 
 echo
-echo "[INFO] Setting firewall defaults.."
+echo "[INFO] Disabling firewall and setting defaults.."
 if [ "$FIREWALL" == "ufw" ]
 then
   eval "ufw disable >/dev/null 2>&1"
@@ -85,7 +85,20 @@ then
   for i in ${PORTS//,/ }
   do
     eval "ufw allow in $i >/dev/null 2>&1"
+    echo "[INFO] Added $i"
   done
+elif [ "$FIREWALL" == "firewalld" ]
+then
+  echo "[WARN] Not implemented yet."
+elif [ "$FIREWALL" == "iptables" ]
+then
+  echo "[WARN] Not implemented yet."
+fi
+
+echo
+if [ "$FIREWALL" == "ufw" ]
+then
+  echo "[INFO] Enabling firewall.."
   eval "ufw --force enable >/dev/null 2>&1"
 elif [ "$FIREWALL" == "firewalld" ]
 then
@@ -94,3 +107,6 @@ elif [ "$FIREWALL" == "iptables" ]
 then
   echo "[WARN] Not implemented yet."
 fi
+
+echo
+echo "[INFO] Firewall complete!"

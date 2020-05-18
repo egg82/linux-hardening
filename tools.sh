@@ -17,3 +17,6 @@ if [[ $CHOICE =~ ^[Yy] ]]
 then
   eval "$UPDATE_CMD"
 fi
+
+echo
+echo "[INFO] Tools complete!"
