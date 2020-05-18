@@ -46,3 +46,15 @@ install_if_nxe_safe () {
     echo "[INFO] $1 is installed!"
   fi
 }
+
+list_users() {
+  eval getent passwd {$(awk '/^UID_MIN/ {print $2}' /etc/login.defs)..$(awk '/^UID_MAX/ {print $2}' /etc/login.defs)} | cut -d: -f1
+}
+
+list_all_users() {
+  getent passwd | cut -d: -f1
+}
+
+list_users_with_shells() {
+  getent passwd | awk -F/ '$NF != "nologin" && $NF != "false" && $NF != "sync"' | cut -d: -f1
+}

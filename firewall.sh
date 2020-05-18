@@ -34,7 +34,6 @@ then
   elif [ "$OS_TYPE" == "debian" ] && [ "$(eval "${PKG_CHECK_AVAIL_CMD//\{item\}/iptables}")" -ne 0 ]
   then
     install_if_nxe "iptables"
-    install_if_nxe "iptables-persistent"
     FIREWALL="iptables"
   elif [ "$OS_TYPE" == "redhat" ] && [ "$(eval "${PKG_CHECK_AVAIL_CMD//\{item\}/firewalld}")" -ne 0 ]
   then
@@ -48,6 +47,11 @@ then
     >&2 echo "[ERROR] Could not find a firewall to install."
     exit 1
   fi
+fi
+
+if [ $FIREWALL == "iptables" ] && [ "$OS_TYPE" == "debian" ]
+then
+  install_if_nxe "iptables-persistent"
 fi
 
 echo
