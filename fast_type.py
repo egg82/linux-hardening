@@ -78,6 +78,11 @@ def vi_input(file_name):
 
 def press_key(char):
     # shorthand keypress
+    if char == '\r':
+        return
+    if char == '\n':
+        keyboard.press(Key.enter)
+        keyboard.release(Key.enter)
     keyboard.press(char)
     keyboard.release(char)
 
