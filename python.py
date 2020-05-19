@@ -38,10 +38,13 @@ def vi_open(file_name):
     parse_string("vi " + file_name)
     press_key(Key.enter)
     time.sleep(1)
+    press_key(Key.esc)
     parse_string(":setl noai nocin nosi inde=") # Something something auto-indenting
     press_key(Key.enter)
+    time.sleep(0.1)
     # Insert mode
     press_key('i')
+    time.sleep(0.1)
 
 def vi_quit():
     # Quit vi
@@ -55,6 +58,7 @@ def chmod(file_name):
     # Make files executable
     parse_string("chmod +x " + file_name)
     press_key(Key.enter)
+    time.sleep(1)
 
 def parse_string(line):
     # Print chars in string
