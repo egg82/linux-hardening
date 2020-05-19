@@ -133,6 +133,7 @@ then
   SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 || return ; pwd -P )"
   echo
   echo "[INFO] Installing cron job.."
+  rm -f /etc/cron.daily/cloudflare
   cat <<EOT >> /etc/cron.daily/cloudflare
 #!/bin/bash
 $SCRIPTPATH $TCP_PORTS $UDP_PORTS >/dev/null 2>&1

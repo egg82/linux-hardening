@@ -55,8 +55,10 @@ then
   echo
   echo "[INFO] Installing spidertrap on port 80.."
   git clone https://bitbucket.org/ethanr/spidertrap.git /root/spidertrap
+  chmod +x /root/spidertrap/spidertrap.py
   FILE=/root/spidertrap/spidertrap.py
-  grep -q '^(#\s*)?PORT' $FILE && sed -i 's/^(#\s*)?PORT.*/PORT = 80/' $FILE || echo 'PORT = 80' >> $FILE
+  grep -qoP '^(#\s*)?PORT' $FILE && sed -i -E 's/^(#\s*)?PORT.*/PORT = 80/' $FILE || echo 'PORT = 80' >> $FILE
+  rm -f /etc/systemd/system/spidertrap.service
   cat <<EOT >> /etc/systemd/system/spidertrap.service
 [Unit]
 Description=Spidertrap
@@ -91,11 +93,11 @@ eval "cd $CWD"
 FILE=/etc/init.d/portspoof
 echo
 read -p "Portspoof listen port (eg. 4444): " -r LISTEN_PORT
-grep -q '^(#\s*)?PS_LISTENPORT' $FILE && sed -i 's/^(#\s*)?PS_LISTENPORT.*/PS_LISTENPORT='"$LISTEN_PORT"'/' $FILE || echo 'PS_LISTENPORT='"$LISTEN_PORT"'' >> $FILE
-grep -q '^(#\s*)?PS_USER' $FILE && sed -i 's/^(#\s*)?PS_USER.*/PS_USER=root/' $FILE || echo 'PS_USER=root' >> $FILE
-grep -q '^(#\s*)?PS_ARGUMENTS' $FILE && sed -i 's/^(#\s*)?PS_ARGUMENTS.*/PS_ARGUMENTS=\"-p '"$LISTEN_PORT"' -s /root/portspoof/tools/portspoof_signatures\"/' $FILE || echo 'PS_ARGUMENTS=\"-p '"$LISTEN_PORT"' -s /root/portspoof/tools/portspoof_signatures\"' >> $FILE
+grep -qoP '^(#\s*)?PS_LISTENPORT' $FILE && sed -i -E 's/^(#\s*)?PS_LISTENPORT.*/PS_LISTENPORT='"$LISTEN_PORT"'/' $FILE || echo 'PS_LISTENPORT='"$LISTEN_PORT"'' >> $FILE
+grep -qoP '^(#\s*)?PS_USER' $FILE && sed -i -E 's/^(#\s*)?PS_USER.*/PS_USER=root/' $FILE || echo 'PS_USER=root' >> $FILE
+grep -qoP '^(#\s*)?PS_ARGUMENTS' $FILE && sed -i -E 's/^(#\s*)?PS_ARGUMENTS.*/PS_ARGUMENTS=\"-p '"$LISTEN_PORT"' -s /root/portspoof/tools/portspoof_signatures\"/' $FILE || echo 'PS_ARGUMENTS=\"-p '"$LISTEN_PORT"' -s /root/portspoof/tools/portspoof_signatures\"' >> $FILE
 read -p "Ports to redirect to portspoof (eg. 1:21,23:79,81:65535): " -r PORTS
-grep -q '^(#\s*)?PS_UNFILTEREDPORTS' $FILE && sed -i 's/^(#\s*)?PS_UNFILTEREDPORTS.*/PS_UNFILTEREDPORTS=\"'"$PORTS"'\"/' $FILE || echo 'PS_UNFILTEREDPORTS=\"'"$PORTS"'\"' >> $FILE
+grep -qoP '^(#\s*)?PS_UNFILTEREDPORTS' $FILE && sed -i -E 's/^(#\s*)?PS_UNFILTEREDPORTS.*/PS_UNFILTEREDPORTS=\"'"$PORTS"'\"/' $FILE || echo 'PS_UNFILTEREDPORTS=\"'"$PORTS"'\"' >> $FILE
 if [ "$OS_TYPE" == "debian" ]
 then
   update-rc.d portspoof defaults
@@ -108,14 +110,14 @@ fi
 
 echo
 echo "[INFO] Disabling compilers.."
-chmod 000 /usr/bin/byacc
-chmod 000 /usr/bin/yacc
-chmod 000 /usr/bin/bcc
-chmod 000 /usr/bin/kgcc
-chmod 000 /usr/bin/cc
-chmod 000 /usr/bin/gcc
-chmod 000 /usr/bin/*c++
-chmod 000 /usr/bin/*g++
+chmod 000 /usr/bin/byacc 2>/dev/null
+chmod 000 /usr/bin/yacc 2>/dev/null
+chmod 000 /usr/bin/bcc 2>/dev/null
+chmod 000 /usr/bin/kgcc 2>/dev/null
+chmod 000 /usr/bin/cc 2>/dev/null
+chmod 000 /usr/bin/gcc 2>/dev/null
+chmod 000 /usr/bin/*c++ 2>/dev/null
+chmod 000 /usr/bin/*g++ 2>/dev/null
 
 echo
 echo "[INFO] Competition configuration complete!"
