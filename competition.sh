@@ -48,6 +48,36 @@ echo "[INFO] Removing write attr for passwd/shadow.."
 chattr -i /etc/passwd
 chattr -i /etc/shadow
 
+timeout 1 bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/80' >/dev/null 2>&1
+RESULT=$?
+if [ $RESULT -ne 0 ]
+then
+  echo
+  echo "[INFO] Installing spidertrap on port 80.."
+  git clone https://bitbucket.org/ethanr/spidertrap.git /root/spidertrap
+  FILE=/root/spidertrap/spidertrap.py
+  grep -q '^(#\s*)?PORT' $FILE && sed -i 's/^(#\s*)?PORT.*/PORT = 80/' $FILE || echo 'PORT = 80' >> $FILE
+  cat <<EOT >> /etc/systemd/system/spidertrap.service
+[Unit]
+Description=Spidertrap
+After=network.target
+
+[Service]
+Type=simple
+Restart=on-failure
+User=root
+Group=root
+ExecStart=/root/spidertrap/spidertrap.py
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target
+EOT
+  systemctl daemon-reload
+  systemctl enable spidertrap.service
+  systemctl start spidertrap.service
+fi
+
 # TODO: Test this
 echo
 echo "[INFO] Installing portspoof.."
