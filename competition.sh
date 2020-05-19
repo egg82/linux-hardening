@@ -45,8 +45,8 @@ fi
 
 echo
 echo "[INFO] Removing write attr for passwd/shadow.."
-chattr -i /etc/passwd
-chattr -i /etc/shadow
+chattr +i /etc/passwd
+chattr +i /etc/shadow
 
 timeout 1 bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/80' >/dev/null 2>&1
 RESULT=$?
