@@ -130,7 +130,7 @@ fi
 
 if [ ! -f /etc/cron.daily/cloudflare ]
 then
-  SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+  SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 || return ; pwd -P )"
   echo
   echo "[INFO] Installing cron job.."
   cat <<EOT >> /etc/cron.daily/cloudflare
