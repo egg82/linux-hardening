@@ -18,6 +18,9 @@ install_if_nxe_safe "wget"
 install_if_nxe_safe "tldr"
 install_if_nxe_safe "nano"
 install_if_nxe_safe "git"
+install_if_nxe_safe "build-essential"
+install_if_nxe_safe "automake"
+install_if_nxe_safe "Development Tools"
 
 echo
 read -p "Would you like to update the system? (y/N): " -r CHOICE
