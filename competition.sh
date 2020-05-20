@@ -88,15 +88,15 @@ CWD=$(pwd)
 cd /root/portspoof || return
 ./configure && make && make install >/dev/null 2>&1
 cp system_files/improved/etc/init.d/portspoof /etc/init.d/portspoof
-cp system_files/improved/etc/default/portspoof /etc/default/portspoof
 eval "cd $CWD"
 FILE=/etc/init.d/portspoof
 echo
 read -p "Portspoof listen port (eg. 4444): " -r LISTEN_PORT
+sed -i -E 's/\s+-i\s+ ${int}.*//' $FILE
 grep -qoP '^(#\s*)?PS_LISTENPORT' $FILE && sed -i -E 's/^(#\s*)?PS_LISTENPORT.*/PS_LISTENPORT='"$LISTEN_PORT"'/' $FILE || echo 'PS_LISTENPORT='"$LISTEN_PORT"'' >> $FILE
 grep -qoP '^(#\s*)?PS_USER' $FILE && sed -i -E 's/^(#\s*)?PS_USER.*/PS_USER=root/' $FILE || echo 'PS_USER=root' >> $FILE
-grep -qoP '^(#\s*)?PS_ARGUMENTS' $FILE && sed -i -E 's/^(#\s*)?PS_ARGUMENTS.*/PS_ARGUMENTS=\"-p '"$LISTEN_PORT"' -s /root/portspoof/tools/portspoof_signatures\"/' $FILE || echo 'PS_ARGUMENTS=\"-p '"$LISTEN_PORT"' -s /root/portspoof/tools/portspoof_signatures\"' >> $FILE
-read -p "Ports to redirect to portspoof (eg. 1:21,23:79,81:65535): " -r PORTS
+grep -qoP '^(#\s*)?PS_ARGUMENTS' $FILE && sed -i -E 's/^(#\s*)?PS_ARGUMENTS.*/PS_ARGUMENTS=\"-p $PS_LISTENPORT -s \/root\/portspoof\/tools\/portspoof_signatures\"/' $FILE || echo 'PS_ARGUMENTS=\"-p $PS_LISTENPORT -s /root/portspoof/tools/portspoof_signatures\"' >> $FILE
+read -p "Ports to redirect to portspoof (eg. 1:21 23:79 81:65535): " -r PORTS
 grep -qoP '^(#\s*)?PS_UNFILTEREDPORTS' $FILE && sed -i -E 's/^(#\s*)?PS_UNFILTEREDPORTS.*/PS_UNFILTEREDPORTS=\"'"$PORTS"'\"/' $FILE || echo 'PS_UNFILTEREDPORTS=\"'"$PORTS"'\"' >> $FILE
 if [ "$OS_TYPE" == "debian" ]
 then

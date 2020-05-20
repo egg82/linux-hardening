@@ -74,6 +74,9 @@ then
   eval "ufw allow out 80/tcp comment \"HTTP TCP\" >/dev/null 2>&1"
   eval "ufw allow out 443/tcp comment \"HTTPS TCP\" >/dev/null 2>&1"
   eval "ufw allow out 9418/tcp comment \"Git TCP\" >/dev/null 2>&1"
+
+  sed '/^COMMIT.*/i -A ufw-before-output -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT' /etc/ufw/before.rules
+  sed '/^COMMIT.*/i -A ufw-before-output -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT' /etc/ufw/before.rules
 elif [ "$FIREWALL" == "firewalld" ]
 then
   echo "[WARN] Not implemented yet."
