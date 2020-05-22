@@ -172,8 +172,12 @@ chattr +i /etc/passwd
 chattr +i /etc/shadow
 
 # TODO: Test/simplify this
-"$INSTALLER" -y install build-essential
-"$INSTALLER" -y group install "Development Tools"
+if [ "$OS_TYPE" == "debian" ]
+then
+  "$INSTALLER" -y install build-essential
+else
+  "$INSTALLER" -y group install "Development Tools"
+fi
 git clone https://github.com/drk1wi/portspoof.git /root/portspoof
 CWD=$(pwd)
 cd /root/portspoof || return

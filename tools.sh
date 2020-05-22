@@ -19,10 +19,10 @@ install_if_nxe_safe "tldr"
 install_if_nxe_safe "nano"
 install_if_nxe_safe "git"
 install_if_nxe_safe "automake"
-if [ $OS_TYPE == "debian" ]
+if [ "$OS_TYPE" == "debian" ]
 then
   install_if_nxe_safe "build-essential"
-elif [ $OS_TYPE == "redhat" ]
+elif [ "$OS_TYPE" == "redhat" ]
 then
   eval "$INSTALLER -y group install \"Development Tools\" >/dev/null 2>&1"
 fi
