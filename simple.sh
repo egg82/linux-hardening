@@ -178,15 +178,15 @@ then
 else
   "$INSTALLER" -y group install "Development Tools"
 fi
+FILE=/etc/init.d/portspoof
 git clone https://github.com/drk1wi/portspoof.git /root/portspoof
 CWD=$(pwd)
 cd /root/portspoof || return
 ./configure && make && make install >/dev/null 2>&1
-cp system_files/improved/etc/init.d/portspoof /etc/init.d/portspoof
+cp system_files/improved/etc/init.d/portspoof $FILE
 eval "cd $CWD"
 echo
 read -p "Portspoof listen port (eg. 4444): " -r LISTEN_PORT
-FILE=/etc/init.d/portspoof
 sed -i -E 's/\s+-i\s+ ${int}.*//' $FILE
 sed -i 's/^PS_LISTENPORT/# PS_LISTENPORT/' $FILE; echo "PS_LISTENPORT=$LISTEN_PORT" >> $FILE # Note the double-quotes here
 sed -i 's/^PS_USER/# PS_USER/' $FILE; echo 'PS_USER=root' >> $FILE
@@ -200,7 +200,7 @@ elif [ "$OS_TYPE" == "redhat" ]
 then
   chkconfig portspoof on
 fi
-/etc/init.d/portspoof start
+$FILE start
 
 # Install tools
 "$INSTALLER" -y install htop iotop iftop ncdu pydf
