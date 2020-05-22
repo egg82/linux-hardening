@@ -147,13 +147,13 @@ done
 
 if [ "$OS_TYPE" == "debian" ]
 then
-  iptables-save > /etc/iptables/rules.v4
-  (crontab -l || true; echo "@reboot iptables-restore < /etc/iptables/rules.v4")| crontab -
-elif [ "$OS_TYPE" == "redhat" ]
-then
-  iptables-save > /etc/sysconfig/iptables
-  (crontab -l || true; echo "@reboot iptables-restore < /etc/sysconfig/iptables")| crontab -
+  IPTABLES=/etc/iptables/rules.v4
+else
+  IPTABLES=/etc/sysconfig/iptables
 fi
+
+iptables-save > $IPTABLES
+(crontab -l || true; echo "@reboot iptables-restore < $IPTABLES")| crontab -
 
 # -snip-
 
