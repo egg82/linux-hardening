@@ -24,3 +24,6 @@ if [[ $CHOICE =~ ^[Yy] ]]
 then
   source ./competition.sh
 fi
+
+# Restart the box to eliminate any lingering open connections
+reboot now

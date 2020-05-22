@@ -90,7 +90,7 @@ then
   then
     read -p "TCP Ports to open to Cloudflare (eg. 22,53,80,443): " -r TCP_PORTS
   fi
-  for i in ${TCP_PORTS//,/ }
+  for i in ${TCP_PORTS//,/$IFS}
   do
     cat /tmp/cf_ips | while IFS= read -r CFIP
     do
@@ -103,7 +103,7 @@ then
   then
     read -p "UDP Ports to open to Cloudflare (eg. 22,53,80,443): " -r UDP_PORTS
   fi
-  for i in ${UDP_PORTS//,/ }
+  for i in ${UDP_PORTS//,/$IFS}
   do
     cat /tmp/cf_ips | while IFS= read -r CFIP
     do

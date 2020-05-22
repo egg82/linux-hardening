@@ -11,7 +11,7 @@ who
 
 echo
 read -p "Users to kick (eg. root,admin,test): " -r USERS
-for i in ${USERS//,/ }
+for i in ${USERS//,/$IFS}
 do
   eval "pkill -15 -u $i"
   sleep 2
@@ -36,6 +36,13 @@ echo
 echo
 echo "Users with shells:"
 getent passwd | awk -F/ '$NF != "nologin" && $NF != "false" && $NF != "sync" && $NF != "!"' | cut -d: -f1
+
+echo
+read -p "Users to password change (eg. root,admin,test): " -r USERS
+for i in ${USERS//,/$IFS}
+do
+  passwd "$i"
+done
 
 echo
 echo "[INFO] Locking accounts.."

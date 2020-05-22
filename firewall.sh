@@ -99,7 +99,7 @@ echo
 if [ "$FIREWALL" == "ufw" ]
 then
   read -p "Ports to open to ALL (eg. 22/tcp,53,80/tcp,443/tcp): " -r PORTS
-  for i in ${PORTS//,/ }
+  for i in ${PORTS//,/$IFS}
   do
     eval "ufw allow in $i >/dev/null 2>&1"
     echo "[INFO] Added $i"
