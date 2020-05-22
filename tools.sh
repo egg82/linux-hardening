@@ -18,9 +18,14 @@ install_if_nxe_safe "wget"
 install_if_nxe_safe "tldr"
 install_if_nxe_safe "nano"
 install_if_nxe_safe "git"
-install_if_nxe_safe "build-essential"
 install_if_nxe_safe "automake"
-install_if_nxe_safe "Development Tools"
+if [ $OS_TYPE == "debian" ]
+then
+  install_if_nxe_safe "build-essential"
+elif [ $OS_TYPE == "redhat" ]
+then
+  eval "$INSTALLER -y group install \"Development Tools\" >/dev/null 2>&1"
+fi
 install_if_nxe_safe "python"
 install_if_nxe_safe "python3"
 install_if_nxe_safe "coreutils"

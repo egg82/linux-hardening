@@ -50,7 +50,6 @@ do
 done
 
 # OpenSSH hardening
-# TODO: simplify
 FILE=/etc/ssh/sshd_config
 if [ -f $FILE ]
 then
@@ -94,7 +93,6 @@ echo
 echo "Listening ports:"
 netstat -peanut | grep LISTEN
 
-# TODO: iptables rules
 # Save existing rules
 iptables-save > iptables.bak
  # Don't lock us out while we flush rules
@@ -174,8 +172,8 @@ chattr +i /etc/passwd
 chattr +i /etc/shadow
 
 # TODO: Test/simplify this
-echo
-echo "[INFO] Installing portspoof.."
+"$INSTALLER" -y install build-essential
+"$INSTALLER" -y group install "Development Tools"
 git clone https://github.com/drk1wi/portspoof.git /root/portspoof
 CWD=$(pwd)
 cd /root/portspoof || return
