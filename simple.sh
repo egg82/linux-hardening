@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# file1.txt
+
 # Ensure IFS exists and is valid
 IFS=" "
 
@@ -80,7 +82,24 @@ then
   systemctl restart ssh.service
 fi
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## -snip-
+# file2.txt
 
 # Firewall
 ufw disable
@@ -141,7 +160,28 @@ iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT # Allow e
 iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT # Allow established/related outgoing (don't lock us out while we reset rules)
 iptables -A INPUT -m conntrack --ctstate INVALID -j DROP # Drop invalid
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # -snip-
+# file3.txt
 
 PORTS=(53 80 443 9418) # TCP out
 for i in "${PORTS[@]}"
