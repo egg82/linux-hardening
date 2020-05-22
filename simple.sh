@@ -108,10 +108,10 @@ then
   read -p "Ports to open to ALL (eg. 22/tcp,53,80/tcp,443/tcp): " -r PORTS
   for i in ${PORTS//,/$IFS}
   do
-    P=(${i//\//$IFS})
+    read -r -a P <<< "${i//\//$IFS}"
     PORT=${P[0]}
     TYPE="tcp/udp"
-    if [ ${#arr[@]} == 1 ]
+    if [ ${#P[@]} -gt 1 ]
     then
       TYPE=${P[1]}
     fi
