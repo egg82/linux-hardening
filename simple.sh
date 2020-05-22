@@ -54,27 +54,27 @@ done
 FILE=/etc/ssh/sshd_config
 if [ -f $FILE ]
 then
-  sed -i 's/^PermitEmptyPasswords/# PermitEmptyPasswords/' $FILE || echo 'PermitEmptyPasswords no' >> $FILE
-  sed -i 's/^PermitUserEnvironment/# PermitUserEnvironment/' $FILE || echo 'PermitUserEnvironment no' >> $FILE
-  sed -i 's/^PrintLastLog/# PrintLastLog/' $FILE || echo 'PrintLastLog no' >> $FILE
-  sed -i 's/^Protocol/# Protocol/' $FILE || echo 'Protocol 2' >> $FILE
-  sed -i 's/^IgnoreRhosts/# IgnoreRhosts/' $FILE || echo 'IgnoreRhosts yes' >> $FILE
-  sed -i 's/^RhostsAuthentication/# RhostsAuthentication/' $FILE || echo 'RhostsAuthentication no' >> $FILE
-  sed -i 's/^RhostsRSAAuthentication/# RhostsRSAAuthentication/' $FILE || echo 'RhostsRSAAuthentication no' >> $FILE
-  sed -i 's/^RSAAuthentication/# RSAAuthentication/' $FILE || echo 'RSAAuthentication yes' >> $FILE
-  sed -i 's/^HostbasedAuthentication/# HostbasedAuthentication/' $FILE || echo 'HostbasedAuthentication no' >> $FILE
-  sed -i 's/^LoginGraceTime/# LoginGraceTime/' $FILE || echo 'LoginGraceTime 120' >> $FILE
-  sed -i 's/^MaxStartups/# MaxStartups/' $FILE || echo 'MaxStartups 2' >> $FILE
-  sed -i 's/^AllowTcpForwarding/# AllowTcpForwarding/' $FILE || echo 'AllowTcpForwarding no' >> $FILE
-  sed -i 's/^X11Forwarding/# X11Forwarding/' $FILE || echo 'X11Forwarding no' >> $FILE
+  sed -i 's/^PermitEmptyPasswords/# PermitEmptyPasswords/' $FILE; echo 'PermitEmptyPasswords no' >> $FILE
+  sed -i 's/^PermitUserEnvironment/# PermitUserEnvironment/' $FILE; echo 'PermitUserEnvironment no' >> $FILE
+  sed -i 's/^PrintLastLog/# PrintLastLog/' $FILE; echo 'PrintLastLog no' >> $FILE
+  sed -i 's/^Protocol/# Protocol/' $FILE; echo 'Protocol 2' >> $FILE
+  sed -i 's/^IgnoreRhosts/# IgnoreRhosts/' $FILE; echo 'IgnoreRhosts yes' >> $FILE
+  sed -i 's/^RhostsAuthentication/# RhostsAuthentication/' $FILE; echo 'RhostsAuthentication no' >> $FILE
+  sed -i 's/^RhostsRSAAuthentication/# RhostsRSAAuthentication/' $FILE; echo 'RhostsRSAAuthentication no' >> $FILE
+  sed -i 's/^RSAAuthentication/# RSAAuthentication/' $FILE; echo 'RSAAuthentication yes' >> $FILE
+  sed -i 's/^HostbasedAuthentication/# HostbasedAuthentication/' $FILE; echo 'HostbasedAuthentication no' >> $FILE
+  sed -i 's/^LoginGraceTime/# LoginGraceTime/' $FILE; echo 'LoginGraceTime 120' >> $FILE
+  sed -i 's/^MaxStartups/# MaxStartups/' $FILE; echo 'MaxStartups 2' >> $FILE
+  sed -i 's/^AllowTcpForwarding/# AllowTcpForwarding/' $FILE; echo 'AllowTcpForwarding no' >> $FILE
+  sed -i 's/^X11Forwarding/# X11Forwarding/' $FILE; echo 'X11Forwarding no' >> $FILE
 
   read -p "Users to allow (eg. root,user1,user2): " -r USERS
-  sed -i 's/^AllowUsers/# AllowUsers/' $FILE || echo "AllowUsers ${USERS//,/ }" >> $FILE # Note the double-quotes here
+  sed -i 's/^AllowUsers/# AllowUsers/' $FILE; echo "AllowUsers ${USERS//,/ }" >> $FILE # Note the double-quotes here
   if [[ $USERS =~ root ]]
   then
-    sed -i 's/^PermitRootLogin/# PermitRootLogin/' $FILE || echo 'PermitRootLogin yes' >> $FILE
+    sed -i 's/^PermitRootLogin/# PermitRootLogin/' $FILE; echo 'PermitRootLogin yes' >> $FILE
   else
-    sed -i 's/^PermitRootLogin/# PermitRootLogin/' $FILE || echo 'PermitRootLogin no' >> $FILE
+    sed -i 's/^PermitRootLogin/# PermitRootLogin/' $FILE; echo 'PermitRootLogin no' >> $FILE
   fi
 
   systemctl restart ssh.service
@@ -95,10 +95,22 @@ echo "Listening ports:"
 netstat -peanut | grep LISTEN
 
 # TODO: iptables rules
-iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT # Allow established/related incoming
-iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT # Allow established/related outgoing
-iptables -P INPUT DROP # Default deny incoming
-iptables -P OUTPUT DROP # Default deny outgoing
+# Save existing rules
+iptables-save > iptables.bak
+ # Don't lock us out while we flush rules
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -P OUTPUT ACCEPT
+# Flush all existing rules
+iptables -t nat -F
+iptables -t mangle -F
+iptables -F
+iptables -X
+
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT # Allow established/related incoming (don't lock us out while we reset rules)
+iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT # Allow established/related outgoing (don't lock us out while we reset rules)
+iptables -P INPUT DROP # Default deny incoming (after established/related rules so we don't lock ourselves out while we reset rules)
+iptables -P OUTPUT DROP # Default deny outgoing (after established/related rules so we don't lock ourselves out while we reset rules)
 
 iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT # DNS TCP out
 iptables -A OUTPUT -p udp --dport 53 -j ACCEPT # DNS UDP out
@@ -136,11 +148,11 @@ done
 if [ "$OS_TYPE" == "debian" ]
 then
   iptables-save > /etc/iptables/rules.v4
-  (crontab -l ; echo "@reboot iptables-restore < /etc/iptables/rules.v4")| crontab -
+  (crontab -l || true; echo "@reboot iptables-restore < /etc/iptables/rules.v4")| crontab -
 elif [ "$OS_TYPE" == "redhat" ]
 then
   iptables-save > /etc/sysconfig/iptables
-  (crontab -l ; echo "@reboot iptables-restore < /etc/sysconfig/iptables")| crontab -
+  (crontab -l || true; echo "@reboot iptables-restore < /etc/sysconfig/iptables")| crontab -
 fi
 
 # -snip-
@@ -174,11 +186,11 @@ echo
 read -p "Portspoof listen port (eg. 4444): " -r LISTEN_PORT
 FILE=/etc/init.d/portspoof
 sed -i -E 's/\s+-i\s+ ${int}.*//' $FILE
-sed -i 's/^PS_LISTENPORT/# PS_LISTENPORT/' $FILE || echo "PS_LISTENPORT=$LISTEN_PORT" >> $FILE # Note the double-quotes here
-sed -i 's/^PS_USER/# PS_USER/' $FILE || echo 'PS_USER=root' >> $FILE
-sed -i 's/^PS_ARGUMENTS/# PS_ARGUMENTS/' $FILE || echo 'PS_ARGUMENTS="-p $PS_LISTENPORT -s /root/portspoof/tools/portspoof_signatures"' >> $FILE
+sed -i 's/^PS_LISTENPORT/# PS_LISTENPORT/' $FILE; echo "PS_LISTENPORT=$LISTEN_PORT" >> $FILE # Note the double-quotes here
+sed -i 's/^PS_USER/# PS_USER/' $FILE; echo 'PS_USER=root' >> $FILE
+sed -i 's/^PS_ARGUMENTS/# PS_ARGUMENTS/' $FILE; echo 'PS_ARGUMENTS="-p $PS_LISTENPORT -s /root/portspoof/tools/portspoof_signatures"' >> $FILE
 read -p "Ports to redirect to portspoof (eg. 1:21 23:79 81:65535): " -r PORTS
-sed -i 's/^PS_UNFILTEREDPORTS/# PS_UNFILTEREDPORTS/' $FILE || echo "PS_UNFILTEREDPORTS=\"$PORTS\"" >> $FILE # Note the double-quotes here
+sed -i 's/^PS_UNFILTEREDPORTS/# PS_UNFILTEREDPORTS/' $FILE; echo "PS_UNFILTEREDPORTS=\"$PORTS\"" >> $FILE # Note the double-quotes here
 if [ "$OS_TYPE" == "debian" ]
 then
   update-rc.d portspoof defaults
