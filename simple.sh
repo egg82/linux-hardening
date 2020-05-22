@@ -95,7 +95,7 @@ netstat -peanut | grep LISTEN
 
 # Save existing rules
 iptables-save > iptables.bak
- # Don't lock us out while we flush rules
+# Don't lock us out while we flush rules
 iptables -P INPUT ACCEPT
 iptables -P FORWARD ACCEPT
 iptables -P OUTPUT ACCEPT
@@ -143,6 +143,8 @@ do
   fi
 done
 
+# -snip-
+
 if [ "$OS_TYPE" == "debian" ]
 then
   IPTABLES=/etc/iptables/rules.v4
@@ -152,8 +154,6 @@ fi
 
 iptables-save > $IPTABLES
 (crontab -l || true; echo "@reboot iptables-restore < $IPTABLES")| crontab -
-
-# -snip-
 
 # Whoami?
 ORIGINAL=$(which whoami)
@@ -170,37 +170,6 @@ chmod +x "$ORIGINAL"
 # passwd,shadow protection
 chattr +i /etc/passwd
 chattr +i /etc/shadow
-
-# TODO: Test/simplify this
-if [ "$OS_TYPE" == "debian" ]
-then
-  "$INSTALLER" -y install build-essential
-else
-  "$INSTALLER" -y group install "Development Tools"
-fi
-FILE=/etc/init.d/portspoof
-git clone https://github.com/drk1wi/portspoof.git /root/portspoof
-CWD=$(pwd)
-cd /root/portspoof || return
-./configure && make && make install >/dev/null 2>&1
-cp system_files/improved/etc/init.d/portspoof $FILE
-eval "cd $CWD"
-echo
-read -p "Portspoof listen port (eg. 4444): " -r LISTEN_PORT
-sed -i -E 's/\s+-i\s+ ${int}.*//' $FILE
-sed -i 's/^PS_LISTENPORT/# PS_LISTENPORT/' $FILE; echo "PS_LISTENPORT=$LISTEN_PORT" >> $FILE # Note the double-quotes here
-sed -i 's/^PS_USER/# PS_USER/' $FILE; echo 'PS_USER=root' >> $FILE
-sed -i 's/^PS_ARGUMENTS/# PS_ARGUMENTS/' $FILE; echo 'PS_ARGUMENTS="-p $PS_LISTENPORT -s /root/portspoof/tools/portspoof_signatures"' >> $FILE
-read -p "Ports to redirect to portspoof (eg. 1:21 23:79 81:65535): " -r PORTS
-sed -i 's/^PS_UNFILTEREDPORTS/# PS_UNFILTEREDPORTS/' $FILE; echo "PS_UNFILTEREDPORTS=\"$PORTS\"" >> $FILE # Note the double-quotes here
-if [ "$OS_TYPE" == "debian" ]
-then
-  update-rc.d portspoof defaults
-elif [ "$OS_TYPE" == "redhat" ]
-then
-  chkconfig portspoof on
-fi
-$FILE start
 
 # Install tools
 "$INSTALLER" -y install htop iotop iftop ncdu pydf
