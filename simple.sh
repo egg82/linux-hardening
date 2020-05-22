@@ -141,10 +141,6 @@ iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT # Allow e
 iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT # Allow established/related outgoing (don't lock us out while we reset rules)
 iptables -A INPUT -m conntrack --ctstate INVALID -j DROP # Drop invalid
 
-# TODO: Test this
-iptables -A OUTPUT -p tcp --dport 80 -m conntrack --ctstate ESTABLISHED,RELATED -m limit --limit 30/second -j DROP # Drop HTTP conns after 30 sec
-iptables -A OUTPUT -p tcp --dport 443 -m conntrack --ctstate ESTABLISHED,RELATED -m limit --limit 30/second -j DROP # Drop HTTPS conns after 30 sec
-
 # -snip-
 
 PORTS=(53 80 443 9418) # TCP out
