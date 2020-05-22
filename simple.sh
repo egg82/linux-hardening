@@ -69,7 +69,7 @@ then
   sed -i 's/^X11Forwarding/# X11Forwarding/' $FILE || echo 'X11Forwarding no' >> $FILE
 
   read -p "Users to allow (eg. root,user1,user2): " -r USERS
-  sed -i 's/^AllowUsers/# AllowUsers/' $FILE || echo "AllowUsers ${USERS//,/ }" >> $FILE
+  sed -i 's/^AllowUsers/# AllowUsers/' $FILE || echo "AllowUsers ${USERS//,/ }" >> $FILE # Note the double-quotes here
   if [[ $USERS =~ root ]]
   then
     sed -i 's/^PermitRootLogin/# PermitRootLogin/' $FILE || echo 'PermitRootLogin yes' >> $FILE
@@ -95,50 +95,52 @@ echo "Listening ports:"
 netstat -peanut | grep LISTEN
 
 # TODO: iptables rules
-# Default deny incoming/outgoing
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT # Allow established/related incoming
+iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT # Allow established/related outgoing
+iptables -P INPUT DROP # Default deny incoming
+iptables -P OUTPUT DROP # Default deny outgoing
+
+iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT # DNS TCP out
+iptables -A OUTPUT -p udp --dport 53 -j ACCEPT # DNS UDP out
+iptables -A OUTPUT -p udp --dport 123 -j ACCEPT # NTP out
+iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT # HTTP out
+iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT # HTTPS out
+iptables -A OUTPUT -p tcp --dport 9418 -j ACCEPT # Git out
+
+# TODO: Simplify?
+iptables -A OUTPUT -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT # ICMP out
+iptables -A OUTPUT -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT # ICMP out
+# TODO: Test this
+iptables -A OUTPUT -p tcp --dport 80 -m state --state RELATED,ESTABLISHED -m limit --limit 30/second -j DROP # Drop HTTP conns after 30 sec
+iptables -A OUTPUT -p tcp --dport 443 -m state --state RELATED,ESTABLISHED -m limit --limit 30/second -j DROP # Drop HTTPS conns after 30 sec
+
+read -p "Ports to open to ALL (eg. 22/tcp,53,80/tcp,443/tcp): " -r PORTS
+for i in ${PORTS//,/$IFS}
+do
+  read -r -a P <<< "${i//\//$IFS}"
+  PORT=${P[0]}
+  TYPE="tcp/udp"
+  if [ ${#P[@]} -gt 1 ]
+  then
+    TYPE=${P[1]}
+  fi
+  if [ "$TYPE" == "tcp/udp" ]
+  then
+    iptables -A INPUT -p tcp --dport "$PORT" -j ACCEPT
+    iptables -A INPUT -p udp --dport "$PORT" -j ACCEPT
+  else
+    iptables -A INPUT -p "$TYPE" --dport "$PORT" -j ACCEPT
+  fi
+done
+
 if [ "$OS_TYPE" == "debian" ]
 then
-  iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT # Allow established/related incoming
-  iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT # Allow established/related outgoing
-  iptables -P INPUT DROP # Default deny incoming
-  iptables -P OUTPUT DROP # Default deny outgoing
-
-  iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT # DNS TCP out
-  iptables -A OUTPUT -p udp --dport 53 -j ACCEPT # DNS UDP out
-  iptables -A OUTPUT -p udp --dport 123 -j ACCEPT # NTP out
-  iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT # HTTP out
-  iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT # HTTPS out
-  iptables -A OUTPUT -p tcp --dport 9418 -j ACCEPT # Git out
-
-  # TODO: Simplify?
-  iptables -A OUTPUT -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT # ICMP out
-  iptables -A OUTPUT -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT # ICMP out
-  # TODO: Test this
-  iptables -A OUTPUT -p tcp --dport 80 -m state --state RELATED,ESTABLISHED -m limit --limit 30/second -j DROP # Drop HTTP conns after 30 sec
-  iptables -A OUTPUT -p tcp --dport 443 -m state --state RELATED,ESTABLISHED -m limit --limit 30/second -j DROP # Drop HTTPS conns after 30 sec
-  
-  read -p "Ports to open to ALL (eg. 22/tcp,53,80/tcp,443/tcp): " -r PORTS
-  for i in ${PORTS//,/$IFS}
-  do
-    read -r -a P <<< "${i//\//$IFS}"
-    PORT=${P[0]}
-    TYPE="tcp/udp"
-    if [ ${#P[@]} -gt 1 ]
-    then
-      TYPE=${P[1]}
-    fi
-    if [ "$TYPE" == "tcp/udp" ]
-    then
-      iptables -A INPUT -p tcp --dport "$PORT" -j ACCEPT
-      iptables -A INPUT -p udp --dport "$PORT" -j ACCEPT
-    else
-      iptables -A INPUT -p "$TYPE" --dport "$PORT" -j ACCEPT
-    fi
-  done
+  iptables-save > /etc/iptables/rules.v4
+  (crontab -l ; echo "@reboot iptables-restore < /etc/iptables/rules.v4")| crontab -
 elif [ "$OS_TYPE" == "redhat" ]
 then
-  systemctl save iptables.service
-  systemctl restart iptables.service
+  iptables-save > /etc/sysconfig/iptables
+  (crontab -l ; echo "@reboot iptables-restore < /etc/sysconfig/iptables")| crontab -
 fi
 
 # -snip-
