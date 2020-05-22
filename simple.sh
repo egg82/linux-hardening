@@ -114,8 +114,8 @@ then
   iptables -A OUTPUT -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT # ICMP out
   iptables -A OUTPUT -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT # ICMP out
   # TODO: Test this
-  iptables -A OUTPUT -p tcp --dport 80 -m state --state RELATED,ESTABLISHED -m limit --limit 30/second -j DROP --permanent # Drop HTTP conns after 30 sec
-  iptables -A OUTPUT -p tcp --dport 443 -m state --state RELATED,ESTABLISHED -m limit --limit 30/second -j DROP --permanent # Drop HTTPS conns after 30 sec
+  iptables -A OUTPUT -p tcp --dport 80 -m state --state RELATED,ESTABLISHED -m limit --limit 30/second -j DROP # Drop HTTP conns after 30 sec
+  iptables -A OUTPUT -p tcp --dport 443 -m state --state RELATED,ESTABLISHED -m limit --limit 30/second -j DROP # Drop HTTPS conns after 30 sec
   
   read -p "Ports to open to ALL (eg. 22/tcp,53,80/tcp,443/tcp): " -r PORTS
   for i in ${PORTS//,/$IFS}
