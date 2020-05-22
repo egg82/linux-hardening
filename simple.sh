@@ -22,6 +22,7 @@ else
   INSTALLER="yum"
 fi
 
+echo
 read -p "Users to password change (eg. root,admin,test): " -r USERS
 for i in ${USERS//,/$IFS}
 do
@@ -110,26 +111,6 @@ iptables -t mangle -F
 iptables -F
 iptables -X
 
-iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT # Allow established/related incoming (don't lock us out while we reset rules)
-iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT # Allow established/related outgoing (don't lock us out while we reset rules)
-iptables -A INPUT -m conntrack --ctstate INVALID -j DROP # Drop invalid
-iptables -P INPUT DROP # Default deny incoming (after established/related rules so we don't lock ourselves out while we reset rules)
-iptables -P OUTPUT DROP # Default deny outgoing (after established/related rules so we don't lock ourselves out while we reset rules)
-
-iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT # DNS TCP out
-iptables -A OUTPUT -p udp --dport 53 -j ACCEPT # DNS UDP out
-iptables -A OUTPUT -p udp --dport 123 -j ACCEPT # NTP out
-iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT # HTTP out
-iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT # HTTPS out
-iptables -A OUTPUT -p tcp --dport 9418 -j ACCEPT # Git out
-
-# TODO: Simplify?
-iptables -A OUTPUT -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT # ICMP out
-iptables -A OUTPUT -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT # ICMP out
-# TODO: Test this
-iptables -A OUTPUT -p tcp --dport 80 -m state --state RELATED,ESTABLISHED -m limit --limit 30/second -j DROP # Drop HTTP conns after 30 sec
-iptables -A OUTPUT -p tcp --dport 443 -m state --state RELATED,ESTABLISHED -m limit --limit 30/second -j DROP # Drop HTTPS conns after 30 sec
-
 echo
 read -p "Ports to open to ALL (eg. 22/tcp,53,80/tcp,443/tcp): " -r PORTS
 for i in ${PORTS//,/$IFS}
@@ -143,14 +124,51 @@ do
   fi
   if [ "$TYPE" == "tcp/udp" ]
   then
-    iptables -A INPUT -p tcp --dport "$PORT" -j ACCEPT
-    iptables -A INPUT -p udp --dport "$PORT" -j ACCEPT
+    iptables -A INPUT -p tcp --dport "$PORT" -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
+    iptables -A OUTPUT -p tcp --sport "$PORT" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+    iptables -A INPUT -p udp --dport "$PORT" -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
+    iptables -A OUTPUT -p udp --sport "$PORT" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
   else
-    iptables -A INPUT -p "$TYPE" --dport "$PORT" -j ACCEPT
+    iptables -A INPUT -p "$TYPE" --dport "$PORT" -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
+    iptables -A OUTPUT -p "$TYPE" --sport "$PORT" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
   fi
 done
 
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT # Allow established/related incoming (don't lock us out while we reset rules)
+iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT # Allow established/related outgoing (don't lock us out while we reset rules)
+iptables -A INPUT -m conntrack --ctstate INVALID -j DROP # Drop invalid
+
+# TODO: Test this
+iptables -A OUTPUT -p tcp --dport 80 -m conntrack --ctstate ESTABLISHED,RELATED -m limit --limit 30/second -j DROP # Drop HTTP conns after 30 sec
+iptables -A OUTPUT -p tcp --dport 443 -m conntrack --ctstate ESTABLISHED,RELATED -m limit --limit 30/second -j DROP # Drop HTTPS conns after 30 sec
+
 # -snip-
+
+PORTS=(53 80 443 9418) # TCP out
+for i in "${PORTS[@]}"
+do
+  iptables -A OUTPUT -p tcp --dport "$i" -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
+  iptables -A INPUT -p tcp --sport "$i" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+done
+
+PORTS=(53 123) # UDP out
+for i in "${PORTS[@]}"
+do
+  iptables -A OUTPUT -p udp --dport "$i" -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
+  iptables -A INPUT -p udp --sport "$i" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+done
+
+iptables -A OUTPUT -p icmp -m conntrack --ctstate NEW,ESTABLISHED,RELATED,RELATED -j ACCEPT # ICMP out
+iptables -A INPUT -p icmp -m conntrack --ctstate ESTABLISHED,RELATED,RELATED -j ACCEPT # ICMP out
+
+iptables -A INPUT -j LOG -m limit --limit 12/min --log-level 4 --log-prefix 'IP INPUT drop: '
+iptables -A OUTPUT -j LOG -m limit --limit 12/min --log-level 4 --log-prefix 'IP OUTPUT drop: '
+
+iptables -P INPUT DROP # Default deny incoming (after established/related rules so we don't lock ourselves out while we reset rules)
+iptables -P OUTPUT DROP # Default deny outgoing (after established/related rules so we don't lock ourselves out while we reset rules)
 
 if [ "$OS_TYPE" == "debian" ]
 then
@@ -159,6 +177,8 @@ else
   IPTABLES=/etc/sysconfig/iptables
 fi
 
+mkdir -p "$(dirname $IPTABLES)"
+touch $IPTABLES
 iptables-save > $IPTABLES
 (crontab -l || true; echo "@reboot iptables-restore < $IPTABLES")| crontab -
 
