@@ -1,5 +1,7 @@
 #!/bin/bash
 
+IFS=" "
+
 source ./root_check.sh
 source ./settings.sh
 

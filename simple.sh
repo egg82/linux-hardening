@@ -7,6 +7,8 @@ then
   exit $?
 fi
 
+IFS=" "
+
 # What OS are we running?
 OS_TYPE=""
 INSTALLER=""
