@@ -41,7 +41,7 @@ echo
 
 # Kick 'em
 echo
-read -p "Users to kick: " -r USERS
+read -p "Users to kick (eg. root,admin,test): " -r USERS
 for i in ${USERS//,/$IFS}
 do
   pkill -15 -u "$i"
@@ -67,7 +67,7 @@ then
   sed -i 's/^AllowTcpForwarding/# AllowTcpForwarding/' $FILE; echo 'AllowTcpForwarding no' >> $FILE
   sed -i 's/^X11Forwarding/# X11Forwarding/' $FILE; echo 'X11Forwarding no' >> $FILE
 
-  read -p "Users to allow (eg. root,user1,user2): " -r USERS
+  read -p "Users to allow for SSH (eg. root,user1,user2): " -r USERS
   sed -i 's/^AllowUsers/# AllowUsers/' $FILE; echo "AllowUsers ${USERS//,/ }" >> $FILE # Note the double-quotes here
   if [[ $USERS =~ root ]]
   then
@@ -89,6 +89,11 @@ systemctl stop firewalld
 # Install net-tools
 "$INSTALLER" -y install net-tools
 
+# Print existing rules
+echo
+echo "Current rules:"
+iptables -nvL
+
 echo
 echo "Listening ports:"
 netstat -peanut | grep LISTEN
@@ -107,6 +112,7 @@ iptables -X
 
 iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT # Allow established/related incoming (don't lock us out while we reset rules)
 iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT # Allow established/related outgoing (don't lock us out while we reset rules)
+iptables -A INPUT -m conntrack --ctstate INVALID -j DROP # Drop invalid
 iptables -P INPUT DROP # Default deny incoming (after established/related rules so we don't lock ourselves out while we reset rules)
 iptables -P OUTPUT DROP # Default deny outgoing (after established/related rules so we don't lock ourselves out while we reset rules)
 
@@ -124,6 +130,7 @@ iptables -A OUTPUT -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT # ICMP
 iptables -A OUTPUT -p tcp --dport 80 -m state --state RELATED,ESTABLISHED -m limit --limit 30/second -j DROP # Drop HTTP conns after 30 sec
 iptables -A OUTPUT -p tcp --dport 443 -m state --state RELATED,ESTABLISHED -m limit --limit 30/second -j DROP # Drop HTTPS conns after 30 sec
 
+echo
 read -p "Ports to open to ALL (eg. 22/tcp,53,80/tcp,443/tcp): " -r PORTS
 for i in ${PORTS//,/$IFS}
 do
