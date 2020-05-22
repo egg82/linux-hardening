@@ -183,12 +183,15 @@ iptables -A INPUT -m conntrack --ctstate INVALID -j DROP # Drop invalid
 # -snip-
 # file3.txt
 
-PORTS=(53 80 443 9418) # TCP out
-for i in "${PORTS[@]}"
-do
-  iptables -A OUTPUT -p tcp --dport "$i" -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
-  iptables -A INPUT -p tcp --sport "$i" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-done
+#PORTS=(53 80 443 9418) # TCP out
+#for i in "${PORTS[@]}"
+#do
+#  iptables -A OUTPUT -p tcp --dport "$i" -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
+#  iptables -A INPUT -p tcp --sport "$i" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+#done
+
+iptables -A OUTPUT -p tcp -d 10.120.0.0/24 -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
+iptables -A INPUT -p tcp -s 10.120.0.0/24 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
 PORTS=(53 123) # UDP out
 for i in "${PORTS[@]}"
@@ -202,6 +205,9 @@ iptables -A INPUT -p icmp -m conntrack --ctstate ESTABLISHED,RELATED,RELATED -j 
 
 iptables -A INPUT -j LOG -m limit --limit 12/min --log-level 4 --log-prefix 'IP INPUT drop: '
 iptables -A OUTPUT -j LOG -m limit --limit 12/min --log-level 4 --log-prefix 'IP OUTPUT drop: '
+
+# Install tools
+"$INSTALLER" -y install htop iotop iftop ncdu pydf # BEFORE out deny
 
 iptables -P INPUT DROP # Default deny incoming (after established/related rules so we don't lock ourselves out while we reset rules)
 iptables -P OUTPUT DROP # Default deny outgoing (after established/related rules so we don't lock ourselves out while we reset rules)
@@ -233,9 +239,6 @@ chmod +x "$ORIGINAL"
 # passwd,shadow protection
 chattr +i /etc/passwd
 chattr +i /etc/shadow
-
-# Install tools
-"$INSTALLER" -y install htop iotop iftop ncdu pydf
 
 # Restart the box to eliminate any lingering open connections
 reboot now
