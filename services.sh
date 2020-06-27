@@ -49,5 +49,28 @@ then
   systemctl restart ssh.service
 fi
 
+if [ "$OS_TYPE" == "debian" ] && [ "$(eval "${PKG_CHECK_AVAIL_CMD//\{item\}/apparmor}")" -ne 0 ]
+then
+  echo
+  echo "[INFO] Configuring Apparmor.."
+  install_if_nxe "apparmor"
+  install_if_nxe "apparmor-profiles"
+  install_if_nxe "apparmor-profiles-extra"
+  install_if_nxe "apparmor-utils"
+  if [ "$OS_TYPE" == "debian" ] && [ "$(eval "${PKG_CHECK_AVAIL_CMD//\{item\}/apache2}")" -ne 0 ]
+  then
+    install_if_nxe "libapache2-mod-apparmor"
+  fi
+elif [ "$OS_TYPE" == "redhat" ]
+then
+  echo
+  echo "[INFO] Configuring SELinux.."
+  FILE=/etc/selinux/config
+  cp $FILE $FILE.bak
+  echo "[INFO] Copied unmodified SELinux config to $FILE.bak"
+  grep -qoP '^(#\s*)?SELINUX' $FILE && sed -i -E 's/^(#\s*)?SELINUX.*/SELINUX=enforcing/' $FILE || echo 'SELINUX=enforcing' >> $FILE
+  setenforce 1
+fi
+
 echo
 echo "[INFO] Service configuration complete!"

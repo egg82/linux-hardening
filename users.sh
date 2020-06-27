@@ -10,6 +10,10 @@ echo "Logged-in users:"
 who
 
 echo
+echo "Last logged-in users:"
+last
+
+echo
 read -p "Users to kick (eg. root,admin,test): " -r USERS
 for i in ${USERS//,/$IFS}
 do
